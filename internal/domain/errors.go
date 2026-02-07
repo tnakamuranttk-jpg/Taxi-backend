@@ -37,4 +37,19 @@ var (
 
 	// ErrInvalidDriverStatus はドライバーステータスが不正な場合のエラー
 	ErrInvalidDriverStatus = errors.New("invalid driver status")
+
+	// ErrRideNotFound は配車が見つからない場合のエラー
+	ErrRideNotFound = errors.New("ride not found")
+
+	// ErrRideAlreadyExists は既に配車が存在する場合のエラー
+	ErrRideAlreadyExists = errors.New("ride already exists")
+
+	// ErrInvalidRideStatus は配車ステータスが不正な場合のエラー
+	ErrInvalidRideStatus = errors.New("invalid ride status")
+
+	// ErrActiveRideExists は進行中の配車が既に存在する場合のエラー
+	ErrActiveRideExists = errors.New("active ride already exists")
+
+	// ErrDriverNotAvailable はドライバーが配車可能でない場合のエラー
+	ErrDriverNotAvailable = errors.New("driver is not available")
 )

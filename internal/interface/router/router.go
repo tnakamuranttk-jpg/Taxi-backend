@@ -7,7 +7,7 @@ import (
 )
 
 // NewRouter は新しいGinルーターを作成し、ルーティングを設定します
-func NewRouter(userHandler *handler.UserHandler, driverHandler *handler.DriverHandler) *gin.Engine {
+func NewRouter(userHandler *handler.UserHandler, driverHandler *handler.DriverHandler, rideHandler *handler.RideHandler) *gin.Engine {
 	r := gin.Default()
 
 	// ヘルスチェック
@@ -24,6 +24,7 @@ func NewRouter(userHandler *handler.UserHandler, driverHandler *handler.DriverHa
 			users.GET("", userHandler.GetAllUsers)
 			users.GET("/:id", userHandler.GetUser)
 			users.POST("", userHandler.CreateUser)
+			users.GET("/:passenger_id/rides", rideHandler.GetPassengerRides)
 		}
 
 		// ドライバー関連のルーティング
@@ -35,6 +36,19 @@ func NewRouter(userHandler *handler.UserHandler, driverHandler *handler.DriverHa
 			drivers.POST("", driverHandler.CreateDriver)
 			drivers.PUT("/:id/location", driverHandler.UpdateDriverLocation)
 			drivers.PUT("/:id/status", driverHandler.UpdateDriverStatus)
+			drivers.GET("/:driver_id/rides", rideHandler.GetDriverRides)
+		}
+
+		// 配車関連のルーティング
+		rides := v1.Group("/rides")
+		{
+			rides.POST("", rideHandler.CreateRide)
+			rides.GET("/:id", rideHandler.GetRide)
+			rides.PUT("/:id/accept", rideHandler.AcceptRide)
+			rides.PUT("/:id/arrive", rideHandler.ArriveAtPickup)
+			rides.PUT("/:id/start", rideHandler.StartRide)
+			rides.PUT("/:id/complete", rideHandler.CompleteRide)
+			rides.PUT("/:id/cancel", rideHandler.CancelRide)
 		}
 	}
 

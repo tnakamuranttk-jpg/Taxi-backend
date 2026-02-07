@@ -31,7 +31,7 @@ func main() {
 	}
 
 	// 3. 自動マイグレーション (開発中のみ推奨)
-	if err := db.AutoMigrate(&domain.User{}, &domain.Driver{}); err != nil {
+	if err := db.AutoMigrate(&domain.User{}, &domain.Driver{}, &domain.Ride{}); err != nil {
 		log.Fatalf("Failed to run migrations: %v", err)
 	}
 
@@ -46,8 +46,13 @@ func main() {
 	driverUsecase := usecase.NewDriverUsecase(driverRepo)
 	driverHandler := handler.NewDriverHandler(driverUsecase)
 
+	// Ride
+	rideRepo := persistence.NewRideRepository(db)
+	rideUsecase := usecase.NewRideUsecase(rideRepo, driverRepo, userRepo)
+	rideHandler := handler.NewRideHandler(rideUsecase)
+
 	// 5. ルーターの設定
-	r := router.NewRouter(userHandler, driverHandler)
+	r := router.NewRouter(userHandler, driverHandler, rideHandler)
 
 	// 6. サーバー起動
 	log.Printf("Server starting on :%s...", cfg.Server.Port)

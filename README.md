@@ -100,6 +100,7 @@ go test ./... -v
 | `GET` | `/api/v1/users` | 全ユーザー情報を取得 |
 | `GET` | `/api/v1/users/:id` | 特定のユーザー情報を取得 |
 | `POST` | `/api/v1/users` | 新規ユーザーを登録 |
+| `GET` | `/api/v1/users/:id/rides` | ユーザーの配車履歴を取得 |
 
 #### ドライバー関連
 
@@ -111,6 +112,19 @@ go test ./... -v
 | `POST` | `/api/v1/drivers` | 新規ドライバーを登録 |
 | `PUT` | `/api/v1/drivers/:id/location` | ドライバーの現在地を更新 |
 | `PUT` | `/api/v1/drivers/:id/status` | ドライバーのステータスを更新 |
+| `GET` | `/api/v1/drivers/:id/rides` | ドライバーの配車履歴を取得 |
+
+#### 配車関連
+
+| メソッド | エンドポイント | 説明 |
+|:---|:---|:---|
+| `POST` | `/api/v1/rides` | 配車リクエストを作成 |
+| `GET` | `/api/v1/rides/:id` | 配車情報を取得 |
+| `PUT` | `/api/v1/rides/:id/accept` | ドライバーが配車を承諾 |
+| `PUT` | `/api/v1/rides/:id/arrive` | ドライバーが乗車地点に到着 |
+| `PUT` | `/api/v1/rides/:id/start` | 乗車開始 |
+| `PUT` | `/api/v1/rides/:id/complete` | 乗車完了 |
+| `PUT` | `/api/v1/rides/:id/cancel` | 配車キャンセル |
 
 #### その他
 
