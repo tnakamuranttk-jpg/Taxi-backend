@@ -1,0 +1,16 @@
+services:
+  db:
+    image: mysql:8.0
+    container_name: mysql-container
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: root_password # rootユーザーのパスワード
+      MYSQL_DATABASE: my_database # 初期データベース名
+      MYSQL_USER: user_name # 一般ユーザー名
+      MYSQL_PASSWORD: user_password # 一般ユーザーのパスワード
+      TZ: 'Asia/Tokyo' # タイムゾーンを日本に設定
+    ports:
+      - "3306:3306"
+    volumes:
+      - ./mysql_data:/var/lib/mysql # データをローカルに保存
+    command: --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
