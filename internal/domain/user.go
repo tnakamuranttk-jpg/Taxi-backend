@@ -12,9 +12,9 @@ import (
 
 // User はユーザーエンティティを表します
 type User struct {
-	ID    string `json:"id" gorm:"primaryKey"`
-	Name  string `json:"name"`
-	Email string `json:"email" gorm:"uniqueIndex"`
+	ID    string `json:"id" gorm:"primaryKey;type:varchar(26)"`
+	Name  string `json:"name" gorm:"type:varchar(100)"`
+	Email string `json:"email" gorm:"type:varchar(255);uniqueIndex"`
 }
 
 // UserRepository はユーザーデータの永続化に関するインターフェースです

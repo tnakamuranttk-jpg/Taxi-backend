@@ -24,11 +24,11 @@ const (
 
 // Driver はドライバーエンティティを表します
 type Driver struct {
-	ID            string       `json:"id" gorm:"primaryKey"`
-	Name          string       `json:"name"`
-	Email         string       `json:"email" gorm:"uniqueIndex"`
-	LicenseNumber string       `json:"license_number" gorm:"uniqueIndex"`
-	Status        DriverStatus `json:"status" gorm:"default:offline"`
+	ID            string       `json:"id" gorm:"primaryKey;type:varchar(26)"`
+	Name          string       `json:"name" gorm:"type:varchar(100)"`
+	Email         string       `json:"email" gorm:"type:varchar(255);uniqueIndex"`
+	LicenseNumber string       `json:"license_number" gorm:"type:varchar(50);uniqueIndex"`
+	Status        DriverStatus `json:"status" gorm:"type:varchar(20);default:offline"`
 	Latitude      float64      `json:"latitude"`
 	Longitude     float64      `json:"longitude"`
 	CreatedAt     time.Time    `json:"created_at"`
