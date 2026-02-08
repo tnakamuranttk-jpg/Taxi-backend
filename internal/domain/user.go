@@ -3,7 +3,6 @@ package domain
 
 import (
 	"crypto/rand"
-	"regexp"
 	"strings"
 	"time"
 
@@ -35,7 +34,7 @@ func NewUser(name, email string) (*User, error) {
 
 	// メールアドレスのバリデーション
 	trimmedEmail := strings.TrimSpace(email)
-	if !isValidEmail(trimmedEmail) {
+	if !IsValidEmail(trimmedEmail) {
 		return nil, ErrInvalidEmail
 	}
 
@@ -51,14 +50,4 @@ func NewUser(name, email string) (*User, error) {
 		Name:  trimmedName,
 		Email: trimmedEmail,
 	}, nil
-}
-
-// isValidEmail はメールアドレスの形式をチェックします
-func isValidEmail(email string) bool {
-	if email == "" {
-		return false
-	}
-	// 簡易的なメールアドレス形式チェック
-	emailRegex := regexp.MustCompile(`^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$`)
-	return emailRegex.MatchString(email)
 }

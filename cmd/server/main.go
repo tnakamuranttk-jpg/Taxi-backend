@@ -46,9 +46,10 @@ func main() {
 	driverUsecase := usecase.NewDriverUsecase(driverRepo)
 	driverHandler := handler.NewDriverHandler(driverUsecase)
 
-	// Ride
+	// Ride (トランザクションマネージャー付き)
+	txManager := persistence.NewTransactionManager(db)
 	rideRepo := persistence.NewRideRepository(db)
-	rideUsecase := usecase.NewRideUsecase(rideRepo, driverRepo, userRepo)
+	rideUsecase := usecase.NewRideUsecase(rideRepo, driverRepo, userRepo, txManager)
 	rideHandler := handler.NewRideHandler(rideUsecase)
 
 	// 5. ルーターの設定

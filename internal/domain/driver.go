@@ -3,7 +3,6 @@ package domain
 
 import (
 	"crypto/rand"
-	"regexp"
 	"strings"
 	"time"
 
@@ -56,7 +55,7 @@ func NewDriver(name, email, licenseNumber string) (*Driver, error) {
 
 	// メールアドレスのバリデーション
 	trimmedEmail := strings.TrimSpace(email)
-	if !isValidDriverEmail(trimmedEmail) {
+	if !IsValidEmail(trimmedEmail) {
 		return nil, ErrInvalidEmail
 	}
 
@@ -117,13 +116,4 @@ func (d *Driver) UpdateStatus(status DriverStatus) error {
 // IsAvailable はドライバーが配車可能かどうかを返します
 func (d *Driver) IsAvailable() bool {
 	return d.Status == DriverStatusAvailable
-}
-
-// isValidDriverEmail はメールアドレスの形式をチェックします
-func isValidDriverEmail(email string) bool {
-	if email == "" {
-		return false
-	}
-	emailRegex := regexp.MustCompile(`^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$`)
-	return emailRegex.MatchString(email)
 }

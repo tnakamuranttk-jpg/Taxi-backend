@@ -32,14 +32,16 @@ type rideUsecase struct {
 	rideRepo   domain.RideRepository
 	driverRepo domain.DriverRepository
 	userRepo   domain.UserRepository
+	txManager  domain.TransactionManager
 }
 
 // NewRideUsecase は新しい RideUsecase を生成します
-func NewRideUsecase(rideRepo domain.RideRepository, driverRepo domain.DriverRepository, userRepo domain.UserRepository) RideUsecase {
+func NewRideUsecase(rideRepo domain.RideRepository, driverRepo domain.DriverRepository, userRepo domain.UserRepository, txManager domain.TransactionManager) RideUsecase {
 	return &rideUsecase{
 		rideRepo:   rideRepo,
 		driverRepo: driverRepo,
 		userRepo:   userRepo,
+		txManager:  txManager,
 	}
 }
 
@@ -124,11 +126,17 @@ func (u *rideUsecase) AcceptRide(rideID, driverID string) (*domain.Ride, error) 
 		return nil, err
 	}
 
-	// 更新を保存
-	if err := u.rideRepo.Update(ride); err != nil {
-		return nil, err
-	}
-	if err := u.driverRepo.Update(driver); err != nil {
+	// トランザクション内で更新を保存
+	err = u.txManager.ExecuteInTransaction(func() error {
+		if err := u.rideRepo.Update(ride); err != nil {
+			return err
+		}
+		if err := u.driverRepo.Update(driver); err != nil {
+			return err
+		}
+		return nil
+	})
+	if err != nil {
 		return nil, err
 	}
 
@@ -195,15 +203,30 @@ func (u *rideUsecase) CompleteRide(rideID string) (*domain.Ride, error) {
 	}
 
 	// ドライバーのステータスを available に戻す
+	var driver *domain.Driver
 	if ride.DriverID != "" {
-		driver, err := u.driverRepo.GetByID(ride.DriverID)
-		if err == nil {
-			driver.UpdateStatus(domain.DriverStatusAvailable)
-			u.driverRepo.Update(driver)
+		driver, err = u.driverRepo.GetByID(ride.DriverID)
+		if err != nil {
+			return nil, err
+		}
+		if err := driver.UpdateStatus(domain.DriverStatusAvailable); err != nil {
+			return nil, err
 		}
 	}
 
-	if err := u.rideRepo.Update(ride); err != nil {
+	// トランザクション内で更新を保存
+	err = u.txManager.ExecuteInTransaction(func() error {
+		if err := u.rideRepo.Update(ride); err != nil {
+			return err
+		}
+		if driver != nil {
+			if err := u.driverRepo.Update(driver); err != nil {
+				return err
+			}
+		}
+		return nil
+	})
+	if err != nil {
 		return nil, err
 	}
 
@@ -226,15 +249,30 @@ func (u *rideUsecase) CancelRide(rideID string) (*domain.Ride, error) {
 	}
 
 	// ドライバーが割り当てられている場合、ステータスを available に戻す
+	var driver *domain.Driver
 	if ride.DriverID != "" {
-		driver, err := u.driverRepo.GetByID(ride.DriverID)
-		if err == nil {
-			driver.UpdateStatus(domain.DriverStatusAvailable)
-			u.driverRepo.Update(driver)
+		driver, err = u.driverRepo.GetByID(ride.DriverID)
+		if err != nil {
+			return nil, err
+		}
+		if err := driver.UpdateStatus(domain.DriverStatusAvailable); err != nil {
+			return nil, err
 		}
 	}
 
-	if err := u.rideRepo.Update(ride); err != nil {
+	// トランザクション内で更新を保存
+	err = u.txManager.ExecuteInTransaction(func() error {
+		if err := u.rideRepo.Update(ride); err != nil {
+			return err
+		}
+		if driver != nil {
+			if err := u.driverRepo.Update(driver); err != nil {
+				return err
+			}
+		}
+		return nil
+	})
+	if err != nil {
 		return nil, err
 	}
 
