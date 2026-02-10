@@ -3,6 +3,7 @@ package persistence
 
 import (
 	"github.com/tnakamura/taxi-backend/internal/config"
+	"github.com/tnakamura/taxi-backend/internal/domain"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
 )
@@ -24,4 +25,21 @@ func NewDB(cfg *config.DBConfig) (*gorm.DB, error) {
 	}
 
 	return db, nil
+}
+
+// TransactionManager はトランザクション管理の実装です
+type TransactionManager struct {
+	db *gorm.DB
+}
+
+// NewTransactionManager は新しい TransactionManager を生成します
+func NewTransactionManager(db *gorm.DB) domain.TransactionManager {
+	return &TransactionManager{db: db}
+}
+
+// ExecuteInTransaction はトランザクション内で関数を実行します
+func (tm *TransactionManager) ExecuteInTransaction(fn func() error) error {
+	return tm.db.Transaction(func(tx *gorm.DB) error {
+		return fn()
+	})
 }

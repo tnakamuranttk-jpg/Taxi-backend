@@ -93,11 +93,43 @@ go test ./... -v
 
 ### バージョン付きエンドポイント（推奨）
 
+#### ユーザー関連
+
 | メソッド | エンドポイント | 説明 |
 |:---|:---|:---|
 | `GET` | `/api/v1/users` | 全ユーザー情報を取得 |
 | `GET` | `/api/v1/users/:id` | 特定のユーザー情報を取得 |
 | `POST` | `/api/v1/users` | 新規ユーザーを登録 |
+| `GET` | `/api/v1/users/:id/rides` | ユーザーの配車履歴を取得 |
+
+#### ドライバー関連
+
+| メソッド | エンドポイント | 説明 |
+|:---|:---|:---|
+| `GET` | `/api/v1/drivers` | 全ドライバー情報を取得 |
+| `GET` | `/api/v1/drivers/available` | 配車可能なドライバーを取得 |
+| `GET` | `/api/v1/drivers/:id` | 特定のドライバー情報を取得 |
+| `POST` | `/api/v1/drivers` | 新規ドライバーを登録 |
+| `PUT` | `/api/v1/drivers/:id/location` | ドライバーの現在地を更新 |
+| `PUT` | `/api/v1/drivers/:id/status` | ドライバーのステータスを更新 |
+| `GET` | `/api/v1/drivers/:id/rides` | ドライバーの配車履歴を取得 |
+
+#### 配車関連
+
+| メソッド | エンドポイント | 説明 |
+|:---|:---|:---|
+| `POST` | `/api/v1/rides` | 配車リクエストを作成 |
+| `GET` | `/api/v1/rides/:id` | 配車情報を取得 |
+| `PUT` | `/api/v1/rides/:id/accept` | ドライバーが配車を承諾 |
+| `PUT` | `/api/v1/rides/:id/arrive` | ドライバーが乗車地点に到着 |
+| `PUT` | `/api/v1/rides/:id/start` | 乗車開始 |
+| `PUT` | `/api/v1/rides/:id/complete` | 乗車完了 |
+| `PUT` | `/api/v1/rides/:id/cancel` | 配車キャンセル |
+
+#### その他
+
+| メソッド | エンドポイント | 説明 |
+|:---|:---|:---|
 | `GET` | `/health` | ヘルスチェック |
 
 ### レスポンス例
@@ -108,6 +140,21 @@ go test ./... -v
   "id": "01JXXXXXXXXXXXXXXXXXXXXXX",
   "name": "田中太郎",
   "email": "tanaka@example.com"
+}
+```
+
+#### ドライバー取得成功
+```json
+{
+  "id": "01JXXXXXXXXXXXXXXXXXXXXXX",
+  "name": "佐藤運転手",
+  "email": "sato@example.com",
+  "license_number": "LICENSE-001",
+  "status": "available",
+  "latitude": 35.6762,
+  "longitude": 139.6503,
+  "created_at": "2026-02-08T01:00:00Z",
+  "updated_at": "2026-02-08T01:30:00Z"
 }
 ```
 
@@ -131,7 +178,7 @@ go test ./... -v
 
 ## データの作成 (API)
 
-本プロジェクトでは ID に **ULID** を採用しており、ユーザー作成時に自動生成されます。
+本プロジェクトでは ID に **ULID** を採用しており、ユーザー/ドライバー作成時に自動生成されます。
 
 ### ユーザーの登録
 ターミナルから以下の `curl` コマンドで新しいユーザーを作成できます。
@@ -153,6 +200,39 @@ curl http://localhost:8080/api/v1/users
 ```bash
 curl http://localhost:8080/api/v1/users/{id}
 ```
+
+### ドライバーの登録
+```bash
+curl -X POST http://localhost:8080/api/v1/drivers \
+     -H "Content-Type: application/json" \
+     -d '{"name":"佐藤運転手", "email":"sato@example.com", "license_number":"LICENSE-001"}'
+```
+
+### ドライバー一覧の取得
+```bash
+curl http://localhost:8080/api/v1/drivers
+```
+
+### 配車可能なドライバーの取得
+```bash
+curl http://localhost:8080/api/v1/drivers/available
+```
+
+### ドライバーの位置を更新
+```bash
+curl -X PUT http://localhost:8080/api/v1/drivers/{id}/location \
+     -H "Content-Type: application/json" \
+     -d '{"latitude": 35.6762, "longitude": 139.6503}'
+```
+
+### ドライバーのステータスを更新
+```bash
+curl -X PUT http://localhost:8080/api/v1/drivers/{id}/status \
+     -H "Content-Type: application/json" \
+     -d '{"status": "available"}'
+```
+
+ステータスは `available`（空車）、`busy`（実車）、`offline`（オフライン）のいずれかを指定します。
 
 ---
 
