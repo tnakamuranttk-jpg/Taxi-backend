@@ -36,6 +36,8 @@ type Ride struct {
 	DropoffLatitude  float64    `json:"dropoff_latitude"`
 	DropoffLongitude float64    `json:"dropoff_longitude"`
 	Status           RideStatus `json:"status" gorm:"type:varchar(20);default:requested;index"`
+	FareAmount       int        `json:"fare_amount"` // 料金（円）
+	DistanceKm       float64    `json:"distance_km"` // 走行距離（km）
 	CreatedAt        time.Time  `json:"created_at"`
 	UpdatedAt        time.Time  `json:"updated_at"`
 }
@@ -131,11 +133,16 @@ func (r *Ride) Start() error {
 	return nil
 }
 
-// Complete は乗車を完了します
+// Complete は乗車を完了します（料金を自動計算）
 func (r *Ride) Complete() error {
 	if r.Status != RideStatusOngoing {
 		return ErrInvalidRideStatus
 	}
+
+	// 料金を計算
+	fare := CalculateRideFare(r.PickupLatitude, r.PickupLongitude, r.DropoffLatitude, r.DropoffLongitude)
+	r.FareAmount = fare.TotalFare
+	r.DistanceKm = fare.DistanceKm
 
 	r.Status = RideStatusCompleted
 	r.UpdatedAt = time.Now()

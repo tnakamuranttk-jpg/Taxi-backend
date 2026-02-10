@@ -42,6 +42,7 @@ func NewRouter(userHandler *handler.UserHandler, driverHandler *handler.DriverHa
 		// 配車関連のルーティング
 		rides := v1.Group("/rides")
 		{
+			rides.POST("/estimate", rideHandler.EstimateFare)
 			rides.POST("", rideHandler.CreateRide)
 			rides.GET("/:id", rideHandler.GetRide)
 			rides.PUT("/:id/accept", rideHandler.AcceptRide)

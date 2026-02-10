@@ -399,3 +399,54 @@ func (h *RideHandler) handleRideStatusError(c *gin.Context, err error) {
 		})
 	}
 }
+
+// EstimateFare は乗降車地点から料金を見積もります
+// @Summary 料金見積もり
+// @Description 乗車地点と降車地点を指定して料金を見積もります
+// @Tags rides
+// @Accept json
+// @Produce json
+// @Param request body dto.EstimateRideRequest true "料金見積もりリクエスト"
+// @Success 200 {object} dto.FareEstimateResponse
+// @Failure 400 {object} dto.ErrorResponse
+// @Router /api/v1/rides/estimate [post]
+func (h *RideHandler) EstimateFare(c *gin.Context) {
+	var req dto.EstimateRideRequest
+
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, dto.ErrorResponse{
+			Error:   "validation_error",
+			Message: err.Error(),
+		})
+		return
+	}
+
+	fare, err := h.rideUsecase.EstimateFare(
+		req.PickupLatitude,
+		req.PickupLongitude,
+		req.DropoffLatitude,
+		req.DropoffLongitude,
+	)
+	if err != nil {
+		switch {
+		case errors.Is(err, domain.ErrInvalidLatitude):
+			c.JSON(http.StatusBadRequest, dto.ErrorResponse{
+				Error:   "validation_error",
+				Message: "Invalid latitude",
+			})
+		case errors.Is(err, domain.ErrInvalidLongitude):
+			c.JSON(http.StatusBadRequest, dto.ErrorResponse{
+				Error:   "validation_error",
+				Message: "Invalid longitude",
+			})
+		default:
+			c.JSON(http.StatusInternalServerError, dto.ErrorResponse{
+				Error:   "internal_error",
+				Message: "Failed to estimate fare",
+			})
+		}
+		return
+	}
+
+	c.JSON(http.StatusOK, dto.ToFareEstimateResponse(fare))
+}

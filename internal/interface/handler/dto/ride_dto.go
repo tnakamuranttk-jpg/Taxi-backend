@@ -21,6 +21,14 @@ type AcceptRideRequest struct {
 	DriverID string `json:"driver_id" binding:"required"`
 }
 
+// EstimateRideRequest は料金見積もりリクエストの構造体です
+type EstimateRideRequest struct {
+	PickupLatitude   float64 `json:"pickup_latitude" binding:"required"`
+	PickupLongitude  float64 `json:"pickup_longitude" binding:"required"`
+	DropoffLatitude  float64 `json:"dropoff_latitude" binding:"required"`
+	DropoffLongitude float64 `json:"dropoff_longitude" binding:"required"`
+}
+
 // RideResponse は配車情報のレスポンス構造体です
 type RideResponse struct {
 	ID               string    `json:"id"`
@@ -31,8 +39,18 @@ type RideResponse struct {
 	DropoffLatitude  float64   `json:"dropoff_latitude"`
 	DropoffLongitude float64   `json:"dropoff_longitude"`
 	Status           string    `json:"status"`
+	FareAmount       int       `json:"fare_amount"`
+	DistanceKm       float64   `json:"distance_km"`
 	CreatedAt        time.Time `json:"created_at"`
 	UpdatedAt        time.Time `json:"updated_at"`
+}
+
+// FareEstimateResponse は料金見積もりのレスポンス構造体です
+type FareEstimateResponse struct {
+	BaseFare     int     `json:"base_fare"`
+	DistanceFare int     `json:"distance_fare"`
+	TotalFare    int     `json:"total_fare"`
+	DistanceKm   float64 `json:"distance_km"`
 }
 
 // ToRideResponse はドメインモデルからレスポンス用DTOに変換します
@@ -49,6 +67,8 @@ func ToRideResponse(ride *domain.Ride) *RideResponse {
 		DropoffLatitude:  ride.DropoffLatitude,
 		DropoffLongitude: ride.DropoffLongitude,
 		Status:           string(ride.Status),
+		FareAmount:       ride.FareAmount,
+		DistanceKm:       ride.DistanceKm,
 		CreatedAt:        ride.CreatedAt,
 		UpdatedAt:        ride.UpdatedAt,
 	}
@@ -61,4 +81,17 @@ func ToRideResponseList(rides []*domain.Ride) []*RideResponse {
 		result[i] = ToRideResponse(ride)
 	}
 	return result
+}
+
+// ToFareEstimateResponse はドメインの料金内訳をDTOに変換します
+func ToFareEstimateResponse(fare *domain.FareBreakdown) *FareEstimateResponse {
+	if fare == nil {
+		return nil
+	}
+	return &FareEstimateResponse{
+		BaseFare:     fare.BaseFare,
+		DistanceFare: fare.DistanceFare,
+		TotalFare:    fare.TotalFare,
+		DistanceKm:   fare.DistanceKm,
+	}
 }

@@ -25,6 +25,8 @@ type RideUsecase interface {
 	GetPassengerRides(passengerID string) ([]*domain.Ride, error)
 	// GetDriverRides はドライバーの配車履歴を取得します
 	GetDriverRides(driverID string) ([]*domain.Ride, error)
+	// EstimateFare は乗降車地点から料金を見積もります
+	EstimateFare(pickupLat, pickupLng, dropoffLat, dropoffLng float64) (*domain.FareBreakdown, error)
 }
 
 // rideUsecase は RideUsecase インターフェースの具体的な実装です
@@ -293,4 +295,18 @@ func (u *rideUsecase) GetDriverRides(driverID string) ([]*domain.Ride, error) {
 		return nil, domain.ErrInvalidInput
 	}
 	return u.rideRepo.GetByDriverID(driverID)
+}
+
+// EstimateFare は乗降車地点から料金を見積もります
+func (u *rideUsecase) EstimateFare(pickupLat, pickupLng, dropoffLat, dropoffLng float64) (*domain.FareBreakdown, error) {
+	// 緯度経度のバリデーション
+	if pickupLat < -90 || pickupLat > 90 || dropoffLat < -90 || dropoffLat > 90 {
+		return nil, domain.ErrInvalidLatitude
+	}
+	if pickupLng < -180 || pickupLng > 180 || dropoffLng < -180 || dropoffLng > 180 {
+		return nil, domain.ErrInvalidLongitude
+	}
+
+	fare := domain.CalculateRideFare(pickupLat, pickupLng, dropoffLat, dropoffLng)
+	return fare, nil
 }

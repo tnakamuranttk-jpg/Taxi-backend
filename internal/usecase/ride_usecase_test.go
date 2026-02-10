@@ -568,3 +568,123 @@ func TestGetPassengerRides_EmptyID(t *testing.T) {
 		t.Errorf("expected ErrInvalidInput, got %v", err)
 	}
 }
+
+// --- CompleteRide 料金計算テスト ---
+
+func TestCompleteRide_FareCalculation(t *testing.T) {
+	rideRepo := newMockRideRepository()
+	userRepo := newMockUserRepoForRide()
+	driverRepo := newMockDriverRepoForRide()
+	txManager := &mockTransactionManager{}
+
+	driver := createTestDriver()
+	driver.Status = domain.DriverStatusBusy
+	driverRepo.drivers[driver.ID] = driver
+
+	// 東京駅 → 渋谷駅（約5km）
+	ride := &domain.Ride{
+		ID:               "test-ride-id",
+		DriverID:         driver.ID,
+		PickupLatitude:   35.6812,
+		PickupLongitude:  139.7671,
+		DropoffLatitude:  35.6580,
+		DropoffLongitude: 139.7016,
+		Status:           domain.RideStatusOngoing,
+	}
+	rideRepo.rides[ride.ID] = ride
+
+	usecase := NewRideUsecase(rideRepo, driverRepo, userRepo, txManager)
+
+	completedRide, err := usecase.CompleteRide(ride.ID)
+	if err != nil {
+		t.Fatalf("expected no error, got %v", err)
+	}
+
+	// 料金が自動計算されていること
+	if completedRide.FareAmount <= 0 {
+		t.Error("expected positive fare amount after completion")
+	}
+	if completedRide.DistanceKm <= 0 {
+		t.Error("expected positive distance after completion")
+	}
+
+	// 東京→渋谷は約5km、料金は1500〜2500円程度
+	if completedRide.FareAmount < 1000 || completedRide.FareAmount > 3000 {
+		t.Errorf("fare seems unreasonable: %d yen for %.2f km", completedRide.FareAmount, completedRide.DistanceKm)
+	}
+}
+
+// --- EstimateFare テスト ---
+
+func TestEstimateFare_Success(t *testing.T) {
+	rideRepo := newMockRideRepository()
+	userRepo := newMockUserRepoForRide()
+	driverRepo := newMockDriverRepoForRide()
+	txManager := &mockTransactionManager{}
+
+	usecase := NewRideUsecase(rideRepo, driverRepo, userRepo, txManager)
+
+	// 東京駅 → 渋谷駅
+	fare, err := usecase.EstimateFare(35.6812, 139.7671, 35.6580, 139.7016)
+	if err != nil {
+		t.Fatalf("expected no error, got %v", err)
+	}
+	if fare == nil {
+		t.Fatal("expected fare breakdown, got nil")
+	}
+	if fare.TotalFare <= 0 {
+		t.Error("expected positive total fare")
+	}
+	if fare.BaseFare != domain.BaseFare {
+		t.Errorf("expected base fare %d, got %d", domain.BaseFare, fare.BaseFare)
+	}
+	if fare.DistanceKm <= 0 {
+		t.Error("expected positive distance")
+	}
+}
+
+func TestEstimateFare_ShortDistance(t *testing.T) {
+	rideRepo := newMockRideRepository()
+	userRepo := newMockUserRepoForRide()
+	driverRepo := newMockDriverRepoForRide()
+	txManager := &mockTransactionManager{}
+
+	usecase := NewRideUsecase(rideRepo, driverRepo, userRepo, txManager)
+
+	// ほぼ同一地点（距離ゼロに近い）
+	fare, err := usecase.EstimateFare(35.6812, 139.7671, 35.6813, 139.7672)
+	if err != nil {
+		t.Fatalf("expected no error, got %v", err)
+	}
+	if fare.TotalFare != domain.MinimumFare {
+		t.Errorf("expected minimum fare %d for short distance, got %d", domain.MinimumFare, fare.TotalFare)
+	}
+}
+
+func TestEstimateFare_InvalidLatitude(t *testing.T) {
+	rideRepo := newMockRideRepository()
+	userRepo := newMockUserRepoForRide()
+	driverRepo := newMockDriverRepoForRide()
+	txManager := &mockTransactionManager{}
+
+	usecase := NewRideUsecase(rideRepo, driverRepo, userRepo, txManager)
+
+	_, err := usecase.EstimateFare(100, 139.7671, 35.6580, 139.7016)
+	if err != domain.ErrInvalidLatitude {
+		t.Errorf("expected ErrInvalidLatitude, got %v", err)
+	}
+}
+
+func TestEstimateFare_InvalidLongitude(t *testing.T) {
+	rideRepo := newMockRideRepository()
+	userRepo := newMockUserRepoForRide()
+	driverRepo := newMockDriverRepoForRide()
+	txManager := &mockTransactionManager{}
+
+	usecase := NewRideUsecase(rideRepo, driverRepo, userRepo, txManager)
+
+	_, err := usecase.EstimateFare(35.6812, 200, 35.6580, 139.7016)
+	if err != domain.ErrInvalidLongitude {
+		t.Errorf("expected ErrInvalidLongitude, got %v", err)
+	}
+}
